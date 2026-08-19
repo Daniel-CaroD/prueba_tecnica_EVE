@@ -56,6 +56,9 @@ def calcular_tiempo_vencimiento(df_flujos: pd.DataFrame) -> pd.DataFrame:
     # Convertir plazo a años
     datos["plazo_anios"] = datos["plazo_dias"] / 365
 
+    if (datos["plazo_anios"] <= 0).any():
+        raise ValueError("Existen flujos con plazo negativo o cero. No se puede calcular el tiempo al vencimiento")
+
     # Asignación de punto medio de vencimiento
     bandas_tiempo = {
     (0, 1 / 365): 0.0028,
@@ -192,15 +195,22 @@ def obtener_tasa_cec(df_flujos: pd.DataFrame, df_curvasCEC: pd.DataFrame, interp
 
         # Interpolación exponencial mediante factores de descuento
         else:
+
+            # Convertir plazos de días a años
+            t1_anios = t1 / 365
+            t2_anios = t2 / 365
+            plazo_anios = plazo_dias / 365
+
             # Calcular factores de descuento de los nodos
-            factor_1 = np.exp(-r1 * t1)
-            factor_2 = np.exp(-r2 * t2)
+            factor_1 = np.exp(-r1 * t1_anios)
+            factor_2 = np.exp(-r2 * t2_anios)
 
             # Interpolar exponencialmente los factores de descuento
-            factor = factor_1 * ((factor_2 / factor_1) ** ((plazo_dias - t1) / (t2 - t1)))
+            proporcion = (plazo_anios - t1_anios) / (t2_anios - t1_anios)
+            factor = factor_1 * ((factor_2 / factor_1) ** proporcion)
 
             # Convertir el factor interpolado nuevamente a tasa
-            tasa = -np.log(factor) / plazo_dias
+            tasa = -np.log(factor) / plazo_anios
 
         datos.loc[idx, "tasa_cec"] = tasa
 

@@ -8,20 +8,24 @@ import pandas as pd
 # Lee los datos y aplica validaciones generales
 def leer_datos(ruta: str, nombre_hoja: str) -> pd.DataFrame:
     try:
-        datos =  pd.read_excel(ruta, sheet_name=nombre_hoja)
+        datos = pd.read_excel(ruta, sheet_name=nombre_hoja)
 
-        # Validar que el archivo contenga datos
-        if datos.empty:
-            raise ValueError(f"[Error] El archivo {ruta} - {nombre_hoja}  está vacío")
-        
-        # Si no presenta ningún error, retornar el DataFrame
-        print(f"Los datos del archivo {ruta} - {nombre_hoja} se han leído correctamente")
-        print("")
+    except FileNotFoundError as e:
+        raise ValueError(f"[Error] No se encontró el archivo: {ruta}") from e
 
-        return datos
+    except ValueError as e:
+        raise ValueError(f"[Error] No se encontró la hoja '{nombre_hoja}' en el archivo {ruta}") from e
 
     except Exception as e:
-        raise ValueError(f"[Error] Error al leer el archivo {ruta}: {e}")
+        raise ValueError(f"[Error] No fue posible leer el archivo {ruta}: {e}") from e
+
+    if datos.empty:
+        raise ValueError(f"[Error] El archivo {ruta} - {nombre_hoja} está vacío")
+
+    print(f"Los datos del archivo {ruta} - {nombre_hoja} se han leído correctamente")
+    print("")
+
+    return datos
 
 # Imprime la información general del Dataframe, para verificar posibles inconsistencias
 def mostrar_informacion(datos: pd.DataFrame, nombre: str) -> None:
